@@ -5,11 +5,12 @@ import SegmentationForm from './components/SegmentationForm';
 import JourneyPage from './components/JourneyPage';
 import Onboarding from './components/Onboarding';
 import StewardDashboard from './components/StewardDashboard';
+import AdminDashboard from './components/AdminDashboard';
 import Login from './components/Login';
 import { UserProfile } from './types';
 import { supabase } from './lib/supabase';
 
-type Step = 'hero' | 'form' | 'journey' | 'onboarding' | 'dashboard' | 'login';
+type Step = 'hero' | 'form' | 'journey' | 'onboarding' | 'dashboard' | 'login' | 'admin';
 
 const App: React.FC = () => {
   const [currentStep, setCurrentStep] = useState<Step>('hero');
@@ -21,6 +22,11 @@ const App: React.FC = () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
         await fetchStewardProfile(session.user.id);
+      } else {
+        const saved = localStorage.getItem('temp_discovery_profile');
+        if (saved) {
+          setUserProfile(JSON.parse(saved));
+        }
       }
       setLoading(false);
     };
@@ -47,18 +53,24 @@ const App: React.FC = () => {
       .single();
 
     if (data && !error) {
-      setUserProfile({
+      const profile: UserProfile = {
         name: data.name,
         email: data.email,
+        phone: data.phone,
         gender: data.gender,
         ageBand: data.age_band,
         selectedPathId: data.selected_path_id,
-        hasPaid: data.has_paid
-      });
+        hasPaid: data.has_paid,
+        approvalStatus: data.approval_status,
+        isAdmin: data.is_admin || data.email === 'admin@farmchain.coop' // Support explicit flag or specific email
+      };
+      setUserProfile(profile);
       
-      if (data.has_paid) {
+      if (profile.isAdmin) {
+        setCurrentStep('admin');
+      } else if (data.has_paid) {
         setCurrentStep('dashboard');
-      } else if (data.selected_path_id) {
+      } else if (data.selected_path_id || data.approval_status === 'applied' || data.approval_status === 'approved') {
         setCurrentStep('onboarding');
       } else {
         setCurrentStep('journey');
@@ -72,6 +84,7 @@ const App: React.FC = () => {
   
   const handleLogout = async () => {
     await supabase.auth.signOut();
+    localStorage.removeItem('temp_discovery_profile');
     setUserProfile(null);
     setCurrentStep('hero');
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -90,24 +103,30 @@ const App: React.FC = () => {
 
   const handleOnboardingComplete = async (pathId: string) => {
     const { data: { user } } = await supabase.auth.getUser();
-    if (user && userProfile) {
-      const { error } = await supabase
+    
+    if (userProfile) {
+      const updatedProfile = { 
+        ...userProfile, 
+        selectedPathId: pathId, 
+        hasPaid: true,
+        approvalStatus: 'enrolled' as const
+      };
+      setUserProfile(updatedProfile);
+      localStorage.setItem('temp_discovery_profile', JSON.stringify(updatedProfile));
+      setCurrentStep('dashboard');
+    }
+
+    if (user) {
+      await supabase
         .from('stewards')
         .update({
           selected_path_id: pathId,
-          has_paid: true
+          has_paid: true,
+          approval_status: 'enrolled'
         })
         .eq('id', user.id);
-
-      if (!error) {
-        setUserProfile({ 
-          ...userProfile, 
-          selectedPathId: pathId, 
-          hasPaid: true 
-        });
-        setCurrentStep('dashboard');
-      }
     }
+    
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -124,59 +143,69 @@ const App: React.FC = () => {
 
   return (
     <Layout 
-      isLoggedIn={!!userProfile && currentStep === 'dashboard'} 
+      isLoggedIn={!!userProfile && (currentStep === 'dashboard' || currentStep === 'admin')} 
       onLoginClick={handleGoToLogin}
       onLogoutClick={handleLogout}
     >
       {currentStep === 'hero' && (
-        <section className="relative overflow-hidden px-4">
-          <div className="absolute -top-24 -right-24 w-64 md:w-96 h-64 md:h-96 bg-gold opacity-10 rounded-full blur-3xl"></div>
-          <div className="absolute top-1/2 -left-24 w-48 md:w-64 h-48 md:h-64 bg-pasture opacity-10 rounded-full blur-3xl"></div>
+        <section className="relative overflow-hidden bg-earth">
+          <div className="absolute top-0 right-0 w-[40%] h-[60%] bg-[#f5efe1] rounded-full blur-[100px] -mr-[10%] -mt-[10%] opacity-50"></div>
+          <div className="absolute bottom-0 left-0 w-[30%] h-[40%] bg-[#e9f2e8] rounded-full blur-[100px] -ml-[5%] -mb-[5%] opacity-50"></div>
 
-          <div className="max-w-7xl mx-auto py-16 md:py-32 relative z-10">
-            <div className="text-center max-w-4xl mx-auto">
-              <span className="inline-block bg-pasture/5 text-pasture px-4 py-1.5 rounded-full text-[10px] md:text-xs font-bold uppercase tracking-widest mb-6 border border-pasture/10">
-                On-chain Real World Assets (RWA)
-              </span>
-              <h1 className="text-4xl sm:text-5xl md:text-7xl font-bold text-gray-900 mb-6 md:mb-8 leading-tight">
-                Build Real Wealth from <span className="text-pasture">Real Assets</span>.
+          <div className="max-w-7xl mx-auto py-24 md:py-32 px-6 relative z-10">
+            <div className="text-center max-w-5xl mx-auto">
+              <div className="flex justify-center mb-8">
+                <span className="inline-block bg-white border border-gray-100 text-gray-500 px-6 py-2 rounded-full text-[10px] md:text-[11px] font-bold uppercase tracking-[0.25em] shadow-sm">
+                  On-chain Real World Assets (RWA)
+                </span>
+              </div>
+
+              <h1 className="text-5xl md:text-8xl font-bold text-[#0f172a] mb-8 leading-[1.1] md:leading-[1.1] tracking-tight">
+                Build Real Wealth from <br className="hidden md:block" /> 
+                <span className="text-pasture">Real Assets.</span>
               </h1>
-              <p className="text-lg md:text-xl text-gray-700 mb-4 md:mb-6 max-w-2xl mx-auto leading-relaxed font-medium">
-                Own productive livestock, grow your income in 120 days, and use digital finance to unlock more opportunities.
-              </p>
-              <p className="text-sm md:text-base text-gray-500 mb-8 md:mb-12 max-w-xl mx-auto leading-relaxed italic">
+
+              <div className="max-w-3xl mx-auto bg-white/40 backdrop-blur-sm border border-white/60 p-6 md:p-8 rounded-2xl md:rounded-3xl mb-12 shadow-sm">
+                 <p className="text-lg md:text-xl text-[#334155] leading-relaxed font-medium">
+                  Own productive livestock, grow your income in 120 days, and use digital finance to unlock more opportunities.
+                </p>
+              </div>
+
+              <p className="text-sm md:text-base text-gray-500 mb-12 max-w-2xl mx-auto leading-relaxed italic">
                 We’ve built the farms, the cooperatives, and the financial rails—so you can start small, grow fast, and build lasting wealth.
               </p>
               
-              <div className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-6">
+              <div className="flex flex-col sm:flex-row items-center justify-center space-y-6 sm:space-y-0 sm:space-x-8">
                 <button 
                   onClick={handleStartForm}
-                  className="w-full sm:w-auto bg-pasture text-white px-8 md:px-10 py-4 md:py-5 rounded-xl md:rounded-2xl text-base md:text-lg font-bold hover:shadow-2xl hover:scale-105 transition shadow-xl shadow-pasture/20"
+                  className="w-full sm:w-auto bg-[#244b1f] text-white px-10 py-5 rounded-2xl text-lg font-bold hover:brightness-110 hover:shadow-2xl hover:scale-105 transition shadow-xl shadow-[#244b1f]/20 uppercase tracking-tight"
                 >
                   Discover Your ₦ Path
                 </button>
                 <div 
                   onClick={handleGoToLogin}
-                  className="flex items-center space-x-2 text-sm text-gray-400 cursor-pointer hover:text-pasture transition-colors py-2"
+                  className="flex items-center space-x-3 text-gray-400 cursor-pointer hover:text-pasture transition-all group py-2"
                 >
-                  <i className="fas fa-sign-in-alt text-pasture text-xl"></i>
-                  <span className="font-bold uppercase tracking-widest text-[10px]">Sign In</span>
+                  <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center group-hover:bg-pasture/10 group-hover:text-pasture transition-colors">
+                    <i className="fas fa-sign-in-alt text-lg"></i>
+                  </div>
+                  <span className="font-black uppercase tracking-[0.2em] text-[10px]">Sign In</span>
                 </div>
               </div>
             </div>
 
-            <div className="mt-16 md:mt-24 grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8 text-center md:text-left">
+            <div className="mt-24 grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
               {[
                 { title: "Naira Liquidity", icon: "fa-money-bill-trend-up", color: "bg-blue-50 text-blue-600" },
                 { title: "DAO Coops", icon: "fa-users-between-lines", color: "bg-orange-50 text-orange-600" },
                 { title: "Smart Contracts", icon: "fa-code", color: "bg-green-50 text-green-600" },
                 { title: "Mother Link", icon: "fa-external-link-alt", color: "bg-purple-50 text-purple-600" }
               ].map((f, i) => (
-                <div key={i} className="bg-white p-5 md:p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition flex flex-col items-center md:items-start">
-                  <div className={`w-10 h-10 md:w-12 md:h-12 ${f.color} rounded-xl flex items-center justify-center mb-3 md:mb-4 text-base md:text-xl`}>
+                <div key={i} className="bg-white/80 backdrop-blur-md p-6 rounded-3xl border border-white shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col items-center">
+                  <div className={`w-12 h-12 ${f.color} rounded-2xl flex items-center justify-center mb-4 text-xl shadow-inner`}>
                     <i className={`fas ${f.icon}`}></i>
                   </div>
-                  <h4 className="font-bold text-gray-800 text-xs md:text-sm uppercase tracking-wider">{f.title}</h4>
+                  <h4 className="font-black text-[#1e293b] text-[10px] uppercase tracking-[0.15em]">{f.title}</h4>
                 </div>
               ))}
             </div>
@@ -206,6 +235,10 @@ const App: React.FC = () => {
 
       {currentStep === 'dashboard' && userProfile && (
         <StewardDashboard user={userProfile} />
+      )}
+
+      {currentStep === 'admin' && userProfile?.isAdmin && (
+        <AdminDashboard onClose={() => setCurrentStep('hero')} />
       )}
     </Layout>
   );

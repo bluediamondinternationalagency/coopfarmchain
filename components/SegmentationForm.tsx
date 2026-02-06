@@ -11,6 +11,7 @@ const SegmentationForm: React.FC<SegmentationFormProps> = ({ onComplete }) => {
   const [formData, setFormData] = useState<UserProfile>({
     name: '',
     email: '',
+    phone: '',
     gender: 'male',
     ageBand: '21-35'
   });
@@ -18,15 +19,15 @@ const SegmentationForm: React.FC<SegmentationFormProps> = ({ onComplete }) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.name || !formData.email) return;
+    if (!formData.name || !formData.email || !formData.phone) return;
 
     setIsSubmitting(true);
     
     // Save temp data for state persistence during auth flow
     localStorage.setItem('temp_discovery_profile', JSON.stringify(formData));
 
-    // Initiate Magic Link in background for verification
     try {
+      // Initiate Magic Link
       await supabase.auth.signInWithOtp({
         email: formData.email,
         options: {
@@ -34,7 +35,7 @@ const SegmentationForm: React.FC<SegmentationFormProps> = ({ onComplete }) => {
         }
       });
       
-      // Simulate "Calculating" for immersive UX before moving to destination
+      // Simulate "Calculating" for immersive UX
       setTimeout(() => {
         onComplete(formData);
         setIsSubmitting(false);
@@ -42,7 +43,6 @@ const SegmentationForm: React.FC<SegmentationFormProps> = ({ onComplete }) => {
       
     } catch (error) {
       console.error("Auth error:", error);
-      // Fail gracefully: proceed to destination so user isn't stuck
       onComplete(formData);
       setIsSubmitting(false);
     }
@@ -55,7 +55,7 @@ const SegmentationForm: React.FC<SegmentationFormProps> = ({ onComplete }) => {
         <p className="text-gray-400 text-[10px] font-bold uppercase tracking-widest">Protocol Registration Phase</p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-5">
         <div>
           <label className="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 ml-1">Steward Name</label>
           <input
@@ -68,16 +68,29 @@ const SegmentationForm: React.FC<SegmentationFormProps> = ({ onComplete }) => {
           />
         </div>
 
-        <div>
-          <label className="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 ml-1">Active Email</label>
-          <input
-            required
-            type="email"
-            className="w-full px-5 py-4 rounded-xl md:rounded-2xl border border-gray-200 focus:ring-4 focus:ring-pasture/10 focus:border-pasture outline-none transition-all text-base md:text-sm font-medium bg-gray-50"
-            placeholder="john@example.com"
-            value={formData.email}
-            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-          />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 ml-1">Active Email</label>
+            <input
+              required
+              type="email"
+              className="w-full px-5 py-4 rounded-xl md:rounded-2xl border border-gray-200 focus:ring-4 focus:ring-pasture/10 focus:border-pasture outline-none transition-all text-base md:text-sm font-medium bg-gray-50"
+              placeholder="john@example.com"
+              value={formData.email}
+              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+            />
+          </div>
+          <div>
+            <label className="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 ml-1">Phone (WhatsApp)</label>
+            <input
+              required
+              type="tel"
+              className="w-full px-5 py-4 rounded-xl md:rounded-2xl border border-gray-200 focus:ring-4 focus:ring-pasture/10 focus:border-pasture outline-none transition-all text-base md:text-sm font-medium bg-gray-50"
+              placeholder="08012345678"
+              value={formData.phone}
+              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+            />
+          </div>
         </div>
 
         <div className="grid grid-cols-2 gap-4">
@@ -126,7 +139,7 @@ const SegmentationForm: React.FC<SegmentationFormProps> = ({ onComplete }) => {
         </button>
         
         <p className="text-center text-[9px] text-gray-400 font-bold uppercase tracking-[0.2em] mt-2">
-           {isSubmitting ? "Taking to destination..." : "Protocol Security Enabled"}
+           Direct follow-up available via WhatsApp/Call
         </p>
       </form>
     </div>

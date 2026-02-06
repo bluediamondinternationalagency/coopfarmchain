@@ -3,63 +3,59 @@ import { AgeBand, JourneyContent } from './types';
 
 export const JOURNEY_DATA: Record<AgeBand, JourneyContent> = {
   '16-20': {
-    headline: "The Architecture of Early Freedom",
-    subHeadline: "Start building a compounding asset base while others are still just trading time for money.",
-    whyLivestock: "At your age, you have the most valuable asset: Time. Livestock are biological machines that turn time into more assets. They don't just sit there; they grow and multiply while you learn.",
-    systemSummary: "Join an ecosystem that pairs you with mentors, managed cooperatives, and professional facilities so your inexperience doesn't become a liability.",
-    innovationDetail: "Digital traceability turns your individual animals into a 'verified portfolio' on the Algorand blockchain that banks and financiers can trust as you enter adulthood.",
-    agencyStatement: "The system provides the ladder, but you must do the climbing. Your consistency now determines your freedom at 25.",
-    visionRange: "₦24,000,000 - ₦72,000,000",
+    headline: "From Side Hustles to Real Asset Ownership",
+    subHeadline: "“Stop chasing money. Start owning assets that grow, cycle after cycle.”",
+    whyLivestock: "You’re not 'buying a goat.' You’re entering a real wealth system built on productive assets. In your first 120 days, you go from interested observer to verified livestock asset owner.",
+    systemSummary: "No land. No farming background. The infrastructure is built for you. This is how people with no capital history begin building serious net worth.",
+    innovationDetail: "Proof of Life (PoL): Every animal is verified by a Vet Oracle and recorded on the Algorand blockchain. No 'village stories'—just trackable growth.",
+    agencyStatement: "The system is built. The ladder is here. How far you climb is your choice.",
+    visionRange: "₦25,000,000 - ₦75,000,000+",
     narrative: [
-      { year: 0, title: "Awareness & Entry", description: "You realize effort alone isn't enough; you need a compounding vehicle. You join the system.", outcome: "Strategic Position" },
-      { year: 1, title: "Asset Seed", description: "Ownership of your first breeding heifer within a managed cooperative.", outcome: "1x Asset appreciation" },
-      { year: 2, title: "Compound Velocity", description: "Leveraging offspring to double your herd size via the Common Facility Ranch.", outcome: "2.5x Growth" },
-      { year: 3, title: "Wealth Steward", description: "Securing a tokenized loan against traceable assets to fund education or business.", outcome: "Diversified Portfolio" }
+      { year: 1, title: "Asset Owner", description: "Complete 2–3 fattening cycles. Learn the system. Build discipline and track record.", outcome: "Verified Ownership" },
+      { year: 2, title: "Leveraged Growth", description: "Reinvest profits and unlock financing against your verified assets. Grow without starting from zero.", outcome: "Compounding Herd" },
+      { year: 3, title: "Portfolio Manager", description: "Managing a portfolio of productive assets within cooperative ranches, possibly leading others.", outcome: "Asset Sovereignty" }
     ]
   },
   '21-35': {
-    headline: "In 3 Years, This Could Be Your Story",
-    subHeadline: "Not because of luck. Because you stepped into a real opportunity with real infrastructure behind you.",
-    whyLivestock: "Livestock is a unique wealth engine: People don't stop eating, demand is rising, and animals are productive assets that multiply. This isn't 'village work'—it's building wealth in an industry with constant demand and real cash flow.",
-    systemSummary: "You're stepping into infrastructure that took years to build: Cooperatives for scale, Common Facility Ranches for professional management, and Digital Records for protection.",
-    innovationDetail: "Our innovation combines real assets with digital ownership and finance on Algorand. Traceability makes your ownership credible and opens doors to global scale.",
-    agencyStatement: "The system positions you, but the outcome is yours. The ceiling is no longer set by your background—it's set by your ambition and responsibility.",
-    visionRange: "₦80,000,000 - ₦288,000,000",
+    headline: "From Side Hustles to Real Asset Ownership",
+    subHeadline: "“Stop chasing money. Start owning assets that grow, cycle after cycle.”",
+    whyLivestock: "You’re not “buying a goat.” You’re entering a real wealth system built on productive assets. In your first 120 days, you go from interested observer to verified livestock asset owner.",
+    systemSummary: "No land. No farming background. The infrastructure is already built for you. This is how people with no capital history begin building serious net worth.",
+    innovationDetail: "Proof of Life (PoL): Every animal is verified by a Vet Oracle and recorded on the Algorand blockchain. Traceability turns biology into a verifiable financial instrument.",
+    agencyStatement: "The ceiling is no longer set by your background—it's set by your ambition and responsibility.",
+    visionRange: "₦25,000,000 - ₦75,000,000+",
     narrative: [
-      { year: 0, title: "Awareness of Opportunity", description: "You realize the issue hasn't been your effort, but the lack of a compounding vehicle. You choose a system over random hustles.", outcome: "Mindset Shift" },
-      { year: 1, title: "Ownership Inside a System", description: "Your first registered asset is managed in a professional facility. No more guessing; you're plugged into a production chain.", outcome: "First Compounding Assets" },
-      { year: 2, title: "Leverage Through Innovation", description: "Your assets are digitally recorded. This transparency opens doors to finance. You see that the system equips you, but you drive the growth.", outcome: "Credible Equity" },
-      { year: 3, title: "The Ceiling is Gone", description: "Managing a serious portfolio backed by digital finance. At this point, how far you go is your decision alone.", outcome: "Institutional Stability" }
+      { year: 1, title: "Asset Owner", description: "Complete 2–3 fattening cycles. Learn the system. Build discipline and track record.", outcome: "Real Track Record" },
+      { year: 2, title: "Leveraged Growth", description: "Reinvest profits and unlock financing against your verified assets. Grow without starting from zero.", outcome: "2.5x Capacity" },
+      { year: 3, title: "Portfolio Manager", description: "You’re managing a portfolio of productive assets within cooperative ranches—possibly leading a syndicate.", outcome: "Net Worth Milestone" }
     ]
   },
   '36-50': {
-    headline: "The Generational Stability Protocol",
-    subHeadline: "Anchor your family's future in assets that work as hard as you do.",
-    whyLivestock: "You've worked for money; now make your capital work for you in an asset class that is inflation-resistant and biologically programmed to grow.",
-    systemSummary: "Leverage institutional-grade management and Family Trusts to ensure your livestock portfolio is safe, managed, and growing even when you're busy with your primary career.",
-    innovationDetail: "Tokenization allows you to move capital in and out of livestock markets without the physical burden of transport or sales, all while maintaining traceability.",
-    agencyStatement: "The movement provides the infrastructure to scale. Your role is strategic management and commitment to the generational timeline.",
-    visionRange: "₦192,000,000 - ₦720,000,000",
+    headline: "Build Lasting Wealth from Real, Tangible Assets",
+    subHeadline: "“Protect your money with assets that feed a nation.”",
+    whyLivestock: "You’ve worked hard for your money. This system is designed to protect and grow it without stress. You don’t need to manage animals—you manage ownership and strategy.",
+    systemSummary: "Infrastructure of Trust: Your livestock is raised in Common Facility Ranches with professional care, veterinary oversight, and transparent reporting.",
+    innovationDetail: "Proof of Life (PoL): Visibility for Diaspora & Busy Professionals. Your dashboard shows real animals, real growth, real value via Vet Oracle verification.",
+    agencyStatement: "Not a promise. A pathway for disciplined asset owners who reinvest and scale responsibly.",
+    visionRange: "₦50,000,000 - ₦150,000,000+",
     narrative: [
-      { year: 0, title: "Strategic Allocation", description: "Mapping personal wealth into a high-performance cooperative trust.", outcome: "Risk Mitigation" },
-      { year: 1, title: "Consolidation", description: "Moving from individual ownership to cooperative leadership and governance roles.", outcome: "Efficiency Gain" },
-      { year: 2, title: "Vertical Integration", description: "Using your growing equity to own slices of the value chain (processing, logistics).", outcome: "Margin Expansion" },
-      { year: 3, title: "Legacy Anchor", description: "A self-sustaining asset pool that can fund education, health, or retirement.", outcome: "Perpetual Wealth" }
+      { year: 1, title: "Portfolio Initiation", description: "Move idle or depreciating cash into productive, biologically growing livestock assets.", outcome: "Risk Allocation" },
+      { year: 2, title: "Compounding", description: "Reinvest proceeds from each 120-day cycle to steadily expand your asset base at scale.", outcome: "Value Stabilization" },
+      { year: 3, title: "Stable Cash Flow", description: "Your livestock portfolio becomes a repeatable income engine and a real asset hedge against inflation.", outcome: "Legacy Engine" }
     ]
   },
   '50+': {
-    headline: "The Legacy Mentorship Vanguard",
-    subHeadline: "Preserve your wealth by empowering the next generation of producers.",
-    whyLivestock: "At this stage, wealth preservation is key. Livestock provides a real-asset anchor that has outlasted every financial bubble in history.",
-    systemSummary: "Step into a role of 'Strategic Advisor' where your capital and wisdom fund the growth of younger cohorts, secured by the CFR infrastructure.",
-    innovationDetail: "Traceability protocols allow you to audit your community-impact investments in real-time from anywhere in the world.",
-    agencyStatement: "You provide the wisdom and the spark; the youth provide the energy. Together, we build a legacy that outlives us all.",
-    visionRange: "₦400,000,000+",
+    headline: "Protect and Grow Wealth with Real Assets",
+    subHeadline: "“Assets that hold value and generate cash flow even when currency weakens.”",
+    whyLivestock: "Demand for protein doesn’t crash with the Naira. Biological assets hold value even when currency weakens. We handle everything from feed to market access.",
+    systemSummary: "Cooperative Advantage: Feed sourcing, veterinary care, and market access are handled at scale, giving you margins individual farmers can’t achieve alone.",
+    innovationDetail: "Proof of Life (PoL): Every animal is verified by a Vet Oracle who stakes their reputation on the accuracy of your health and growth data.",
+    agencyStatement: "Build an indestructible legacy. This is where agriculture meets modern finance.",
+    visionRange: "₦100,000,000 - ₦250,000,000+",
     narrative: [
-      { year: 0, title: "Legacy Mapping", description: "Allocating capital into mentorship-driven cooperatives for maximum social ROI.", outcome: "Social Capital" },
-      { year: 1, title: "Capital Infusion", description: "Funding the expansion of facilities to support the growth of a new generation.", outcome: "Preferred Returns" },
-      { year: 2, title: "Audited Impact", description: "Reviewing herd health and growth through the lens of institutional sustainability.", outcome: "Asset Verification" },
-      { year: 3, title: "Movement Icon", description: "Your capital has built a region and a generation, creating an indestructible legacy.", outcome: "Indestructible Legacy" }
+      { year: 1, title: "Portfolio Initiation", description: "Transitioning liquidity into tangible, managed biological assets with zero day-to-day management.", outcome: "Asset Security" },
+      { year: 2, title: "Compounding", description: "Scaling the herd within the Common Facility Ranches to maximize yield per unit of cost.", outcome: "Stable Growth" },
+      { year: 3, title: "Stable Cash Flow", description: "Establishing a self-sustaining asset pool that provides repeatable cash flow and a massive inflation hedge.", outcome: "Indestructible Wealth" }
     ]
   }
 };
