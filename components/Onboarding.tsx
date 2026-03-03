@@ -152,12 +152,17 @@ const Onboarding: React.FC<OnboardingProps> = ({ user, onFinish }) => {
       const { data: { user: authUser } } = await supabase.auth.getUser();
       if (authUser) {
         const tempProfile = JSON.parse(localStorage.getItem('temp_discovery_profile') || '{}');
-        await supabase.from('stewards').update({
+        await supabase.from('stewards').upsert({
+          id: authUser.id,
+          email: authUser.email || user.email,
+          name: tempProfile.name || user.name,
+          phone: tempProfile.phone || user.phone,
+          gender: tempProfile.gender || user.gender,
+          age_band: tempProfile.ageBand || user.ageBand,
           selected_path_id: selectedPathId,
           commitment_note: commitmentNote,
-          approval_status: 'applied',
-          phone: tempProfile.phone || user.phone
-        }).eq('id', authUser.id);
+          approval_status: 'applied'
+        }, { onConflict: 'id' });
       }
     } catch (e) {
       console.warn("Sync deferred.");

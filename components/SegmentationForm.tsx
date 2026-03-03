@@ -32,6 +32,12 @@ const SegmentationForm: React.FC<SegmentationFormProps> = ({ onComplete }) => {
         email: formData.email,
         options: {
           emailRedirectTo: window.location.origin,
+          data: {
+            name: formData.name,
+            phone: formData.phone,
+            gender: formData.gender,
+            age_band: formData.ageBand,
+          },
         }
       });
       

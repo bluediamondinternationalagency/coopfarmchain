@@ -7,25 +7,64 @@ import Onboarding from './components/Onboarding';
 import StewardDashboard from './components/StewardDashboard';
 import AdminDashboard from './components/AdminDashboard';
 import Login from './components/Login';
+import AdminLogin from './components/AdminLogin';
 import { UserProfile } from './types';
 import { supabase } from './lib/supabase';
 
-type Step = 'hero' | 'form' | 'journey' | 'onboarding' | 'dashboard' | 'login' | 'admin';
+type Step = 'hero' | 'form' | 'journey' | 'onboarding' | 'dashboard' | 'login' | 'admin-login' | 'admin';
 
 const App: React.FC = () => {
   const [currentStep, setCurrentStep] = useState<Step>('hero');
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const isAdminUrlRequested =
+    typeof window !== 'undefined' &&
+    (
+      new URLSearchParams(window.location.search).get('admin') === '1' ||
+      window.location.pathname === '/admin'
+    );
+
+  const syncTempProfileToDatabase = async (
+    userId: string,
+    fallbackEmail?: string | null,
+    userMetadata?: Record<string, any>
+  ) => {
+    const saved = localStorage.getItem('temp_discovery_profile');
+
+    try {
+      const tempProfile = saved ? (JSON.parse(saved) as Partial<UserProfile>) : {};
+      const metadata = userMetadata || {};
+      await supabase
+        .from('stewards')
+        .upsert(
+          {
+            id: userId,
+            email: tempProfile.email || fallbackEmail || '',
+            name: tempProfile.name || metadata.name || '',
+            phone: tempProfile.phone || metadata.phone || null,
+            gender: tempProfile.gender || metadata.gender || null,
+            age_band: tempProfile.ageBand || metadata.age_band || metadata.ageBand || null,
+          },
+          { onConflict: 'id' }
+        );
+    } catch (error) {
+      console.warn('Temp profile sync failed:', error);
+    }
+  };
 
   useEffect(() => {
     const checkUser = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
+        await syncTempProfileToDatabase(session.user.id, session.user.email, session.user.user_metadata as Record<string, any>);
         await fetchStewardProfile(session.user.id);
       } else {
         const saved = localStorage.getItem('temp_discovery_profile');
         if (saved) {
           setUserProfile(JSON.parse(saved));
+        }
+        if (isAdminUrlRequested) {
+          setCurrentStep('admin-login');
         }
       }
       setLoading(false);
@@ -35,10 +74,11 @@ const App: React.FC = () => {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (session) {
+        await syncTempProfileToDatabase(session.user.id, session.user.email, session.user.user_metadata as Record<string, any>);
         await fetchStewardProfile(session.user.id);
       } else {
         setUserProfile(null);
-        setCurrentStep('hero');
+        setCurrentStep(isAdminUrlRequested ? 'admin-login' : 'hero');
       }
     });
 
@@ -80,6 +120,7 @@ const App: React.FC = () => {
 
   const handleStartForm = () => setCurrentStep('form');
   const handleGoToLogin = () => setCurrentStep('login');
+  const handleGoToAdminLogin = () => setCurrentStep('admin-login');
   const handleBackToHero = () => setCurrentStep('hero');
   
   const handleLogout = async () => {
@@ -119,12 +160,17 @@ const App: React.FC = () => {
     if (user) {
       await supabase
         .from('stewards')
-        .update({
+        .upsert({
+          id: user.id,
+          email: userProfile?.email || user.email || '',
+          name: userProfile?.name || '',
+          phone: userProfile?.phone || null,
+          gender: userProfile?.gender || null,
+          age_band: userProfile?.ageBand || null,
           selected_path_id: pathId,
           has_paid: true,
           approval_status: 'enrolled'
-        })
-        .eq('id', user.id);
+        }, { onConflict: 'id' });
     }
     
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -217,6 +263,10 @@ const App: React.FC = () => {
         <Login onBack={handleBackToHero} />
       )}
 
+      {currentStep === 'admin-login' && (
+        <AdminLogin onBack={handleBackToHero} />
+      )}
+
       {currentStep === 'form' && (
         <section className="py-12 md:py-24 bg-gray-50 px-4">
           <SegmentationForm onComplete={handleFormComplete} />
@@ -239,6 +289,17 @@ const App: React.FC = () => {
 
       {currentStep === 'admin' && userProfile?.isAdmin && (
         <AdminDashboard onClose={() => setCurrentStep('hero')} />
+      )}
+
+      {currentStep === 'hero' && isAdminUrlRequested && (
+        <div className="fixed bottom-6 right-6 z-50">
+          <button
+            onClick={handleGoToAdminLogin}
+            className="bg-pasture text-white px-5 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-pasture/20 hover:brightness-110 transition"
+          >
+            Admin Login
+          </button>
+        </div>
       )}
     </Layout>
   );

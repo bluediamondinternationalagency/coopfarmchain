@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { UserProfile, ApprovalStatus } from '../types';
+import { ApprovalStatus } from '../types';
 
 interface AdminDashboardProps {
   onClose: () => void;
@@ -11,12 +11,16 @@ interface StewardRecord {
   id: string;
   name: string;
   email: string;
-  phone: string;
-  age_band: string;
+  phone: string | null;
+  gender: string | null;
+  age_band: string | null;
   approval_status: ApprovalStatus;
-  commitment_note: string;
+  commitment_note: string | null;
   created_at: string;
-  selected_path_id: string;
+  updated_at: string;
+  selected_path_id: string | null;
+  has_paid: boolean;
+  is_admin: boolean;
 }
 
 const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
@@ -24,16 +28,21 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
   const [stewards, setStewards] = useState<StewardRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [actioningId, setActioningId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
 
   const fetchStewards = async () => {
     setLoading(true);
+    setError(null);
     const { data, error } = await supabase
       .from('stewards')
       .select('*')
       .order('created_at', { ascending: false });
 
     if (!error && data) {
-      setStewards(data);
+      setStewards(data as StewardRecord[]);
+    } else {
+      setError(error?.message || 'Failed to load steward submissions.');
     }
     setLoading(false);
   };
@@ -44,6 +53,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
 
   const handleUpdateStatus = async (id: string, newStatus: ApprovalStatus) => {
     setActioningId(id);
+    setNotice(null);
+    setError(null);
+
     const { error } = await supabase
       .from('stewards')
       .update({ approval_status: newStatus })
@@ -51,8 +63,68 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
 
     if (!error) {
       setStewards(prev => prev.map(s => s.id === id ? { ...s, approval_status: newStatus } : s));
+      setNotice(`Submission status updated to ${newStatus}.`);
+    } else {
+      setError(error.message || 'Failed to update submission status.');
     }
     setActioningId(null);
+  };
+
+  const escapeCsvCell = (value: unknown) => {
+    const stringValue = value === null || value === undefined ? '' : String(value);
+    return `"${stringValue.replace(/"/g, '""')}"`;
+  };
+
+  const handleExportCsv = () => {
+    if (!stewards.length) {
+      setNotice('No submissions available to export.');
+      return;
+    }
+
+    const header = [
+      'id',
+      'email',
+      'name',
+      'phone',
+      'gender',
+      'age_band',
+      'selected_path_id',
+      'approval_status',
+      'has_paid',
+      'commitment_note',
+      'is_admin',
+      'created_at',
+      'updated_at'
+    ];
+
+    const rows = stewards.map((item) => [
+      item.id,
+      item.email,
+      item.name,
+      item.phone,
+      item.gender,
+      item.age_band,
+      item.selected_path_id,
+      item.approval_status,
+      item.has_paid,
+      item.commitment_note,
+      item.is_admin,
+      item.created_at,
+      item.updated_at
+    ]);
+
+    const csv = [header, ...rows].map((row) => row.map(escapeCsvCell).join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `stewards-export-${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    setNotice('Submission export downloaded.');
   };
 
   const stats = {
@@ -73,11 +145,34 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
             <p className="text-gray-500 text-sm">Reviewing soft commitments and identity anchors for Cohort 24B.</p>
           </div>
           <div className="flex gap-2">
+            <button
+              onClick={fetchStewards}
+              className="px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border border-gray-700 text-gray-300 hover:text-white hover:border-gray-500 transition"
+            >
+              Refresh
+            </button>
+            <button
+              onClick={handleExportCsv}
+              className="px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border border-pasture/20 bg-pasture/20 text-pasture hover:brightness-110 transition"
+            >
+              Export CSV
+            </button>
             <span className="bg-pasture/20 text-pasture px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border border-pasture/20">
               {pendingItems.length} Pending Actions
             </span>
           </div>
         </div>
+
+        {error && (
+          <div className="bg-red-500/10 border border-red-500/20 text-red-300 text-xs px-4 py-3 rounded-xl">
+            {error}
+          </div>
+        )}
+        {notice && !error && (
+          <div className="bg-pasture/10 border border-pasture/20 text-pasture text-xs px-4 py-3 rounded-xl">
+            {notice}
+          </div>
+        )}
 
         {loading ? (
           <div className="py-20 text-center">
@@ -151,15 +246,42 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
             <h1 className="text-3xl font-bold text-white mb-2">Protocol Registry</h1>
             <p className="text-gray-500 text-sm">Comprehensive list of all registered stewards across all lifecycle stages.</p>
           </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={fetchStewards}
+              className="px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border border-gray-700 text-gray-300 hover:text-white hover:border-gray-500 transition"
+            >
+              Refresh
+            </button>
+            <button
+              onClick={handleExportCsv}
+              className="px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border border-pasture/20 bg-pasture/20 text-pasture hover:brightness-110 transition"
+            >
+              Export CSV
+            </button>
+          </div>
         </div>
+
+        {error && (
+          <div className="bg-red-500/10 border border-red-500/20 text-red-300 text-xs px-4 py-3 rounded-xl">
+            {error}
+          </div>
+        )}
+        {notice && !error && (
+          <div className="bg-pasture/10 border border-pasture/20 text-pasture text-xs px-4 py-3 rounded-xl">
+            {notice}
+          </div>
+        )}
 
         <div className="bg-gray-900 border border-gray-800 rounded-[2.5rem] overflow-hidden">
           <table className="w-full text-left">
             <thead>
               <tr className="bg-black/40 border-b border-gray-800">
                 <th className="px-8 py-5 text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Steward</th>
+                <th className="px-8 py-5 text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Contact</th>
                 <th className="px-8 py-5 text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Status</th>
                 <th className="px-8 py-5 text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Path</th>
+                <th className="px-8 py-5 text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Payment</th>
                 <th className="px-8 py-5 text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Enrollment</th>
                 <th className="px-8 py-5 text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Actions</th>
               </tr>
@@ -178,6 +300,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
                       </div>
                     </div>
                   </td>
+                  <td className="px-8 py-5 text-[10px] text-gray-400 font-medium">
+                    <div>{s.phone || '—'}</div>
+                    <div className="uppercase tracking-widest text-[9px] text-gray-500 mt-1">{s.gender || s.age_band ? `${s.gender || '—'} / ${s.age_band || '—'}` : '—'}</div>
+                  </td>
                   <td className="px-8 py-5">
                     <span className={`px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest border ${
                       s.approval_status === 'enrolled' ? 'bg-pasture/10 text-pasture border-pasture/20' :
@@ -191,12 +317,28 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
                   <td className="px-8 py-5 text-[10px] text-gray-400 font-bold uppercase tracking-widest">
                     {s.selected_path_id || 'Not Selected'}
                   </td>
+                  <td className="px-8 py-5 text-[10px] font-black uppercase tracking-widest">
+                    <span className={s.has_paid ? 'text-pasture' : 'text-gray-500'}>
+                      {s.has_paid ? 'Paid' : 'Not Paid'}
+                    </span>
+                  </td>
                   <td className="px-8 py-5 text-[10px] text-gray-500 font-medium">
                     {new Date(s.created_at).toLocaleDateString()}
                   </td>
-                  <td className="px-8 py-5">
-                    <button className="text-gray-500 hover:text-white transition p-2">
-                      <i className="fas fa-ellipsis-v"></i>
+                  <td className="px-8 py-5 flex items-center gap-2">
+                    <button
+                      disabled={actioningId === s.id || s.approval_status === 'approved'}
+                      onClick={() => handleUpdateStatus(s.id, 'approved')}
+                      className="px-3 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest text-pasture border border-pasture/20 hover:bg-pasture/10 disabled:opacity-40 disabled:cursor-not-allowed transition"
+                    >
+                      Approve
+                    </button>
+                    <button
+                      disabled={actioningId === s.id || s.approval_status === 'pending'}
+                      onClick={() => handleUpdateStatus(s.id, 'pending')}
+                      className="px-3 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest text-gray-300 border border-gray-700 hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed transition"
+                    >
+                      Set Pending
                     </button>
                   </td>
                 </tr>
