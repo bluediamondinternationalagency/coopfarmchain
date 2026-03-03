@@ -9,7 +9,7 @@ import AdminDashboard from './components/AdminDashboard';
 import Login from './components/Login';
 import AdminLogin from './components/AdminLogin';
 import { UserProfile } from './types';
-import { supabase } from './lib/supabase';
+import { supabase, supabaseConfigError } from './lib/supabase';
 
 type Step = 'hero' | 'form' | 'journey' | 'onboarding' | 'dashboard' | 'login' | 'admin-login' | 'admin';
 
@@ -17,6 +17,7 @@ const App: React.FC = () => {
   const [currentStep, setCurrentStep] = useState<Step>('hero');
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [startupError, setStartupError] = useState<string | null>(null);
   const isAdminUrlRequested =
     typeof window !== 'undefined' &&
     (
@@ -54,20 +55,25 @@ const App: React.FC = () => {
 
   useEffect(() => {
     const checkUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        await syncTempProfileToDatabase(session.user.id, session.user.email, session.user.user_metadata as Record<string, any>);
-        await fetchStewardProfile(session.user.id);
-      } else {
-        const saved = localStorage.getItem('temp_discovery_profile');
-        if (saved) {
-          setUserProfile(JSON.parse(saved));
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          await syncTempProfileToDatabase(session.user.id, session.user.email, session.user.user_metadata as Record<string, any>);
+          await fetchStewardProfile(session.user.id);
+        } else {
+          const saved = localStorage.getItem('temp_discovery_profile');
+          if (saved) {
+            setUserProfile(JSON.parse(saved));
+          }
+          if (isAdminUrlRequested) {
+            setCurrentStep('admin-login');
+          }
         }
-        if (isAdminUrlRequested) {
-          setCurrentStep('admin-login');
-        }
+      } catch (error) {
+        setStartupError(error instanceof Error ? error.message : 'Failed to initialize application.');
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
 
     checkUser();
@@ -182,6 +188,25 @@ const App: React.FC = () => {
         <div className="text-center px-4">
           <div className="w-12 h-12 border-4 border-pasture/20 border-t-pasture rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-400">Syncing Protocol...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (supabaseConfigError || startupError) {
+    return (
+      <div className="min-h-screen bg-earth flex items-center justify-center px-4">
+        <div className="max-w-xl bg-white border border-gray-200 rounded-3xl p-8 shadow-xl text-center">
+          <div className="w-14 h-14 mx-auto rounded-2xl bg-red-50 text-red-500 flex items-center justify-center text-xl mb-4">
+            <i className="fas fa-triangle-exclamation"></i>
+          </div>
+          <h2 className="text-xl font-bold text-gray-900 mb-3">App Configuration Error</h2>
+          <p className="text-sm text-gray-600 leading-relaxed">
+            {supabaseConfigError || startupError}
+          </p>
+          <p className="text-xs text-gray-400 mt-4 uppercase tracking-widest font-black">
+            Set the required environment variables and redeploy.
+          </p>
         </div>
       </div>
     );
