@@ -179,6 +179,27 @@ const Onboarding: React.FC<OnboardingProps> = ({ user, onFinish }) => {
     setStep(5);
   };
 
+  const loadKorapaySdk = async () => {
+    if (window.Korapay) return true;
+
+    return new Promise<boolean>((resolve) => {
+      const existingScript = document.querySelector('script[data-korapay-sdk="true"]') as HTMLScriptElement | null;
+      if (existingScript) {
+        existingScript.addEventListener('load', () => resolve(true), { once: true });
+        existingScript.addEventListener('error', () => resolve(false), { once: true });
+        return;
+      }
+
+      const script = document.createElement('script');
+      script.src = 'https://js.korapay.com/v1/korapay.min.js';
+      script.async = true;
+      script.dataset.korapaySdk = 'true';
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
+    });
+  };
+
   const handlePayment = async (isFull: boolean) => {
     if (!selectedPath) return;
     setIsPaying(true);
@@ -192,7 +213,9 @@ const Onboarding: React.FC<OnboardingProps> = ({ user, onFinish }) => {
       }, 2500);
     };
 
-    if (window.Korapay) {
+    const hasKorapay = await loadKorapaySdk();
+
+    if (hasKorapay && window.Korapay) {
       window.Korapay.initialize({
         key: "pk_test_placeholder_key",
         reference: `FC_${Date.now()}`,
